@@ -1,5 +1,5 @@
 // DsrManager.sol
-// Copyright (C) 2020 Maker Ecosystem Growth Holdings, INC.
+// Copyright (C) 2020 Haker Ecosystem Growth Holdings, INC.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,7 @@ interface PotLike {
 }
 
 interface JoinLike {
-    function dai() external view returns (address);
+    function hai() external view returns (address);
     function join(address, uint256) external;
     function exit(address, uint256) external;
 }
@@ -42,8 +42,8 @@ interface GemLike {
 
 contract DsrManager {
     PotLike  public pot;
-    GemLike  public dai;
-    JoinLike public daiJoin;
+    GemLike  public hai;
+    JoinLike public haiJoin;
 
     uint256 public supply;
 
@@ -75,36 +75,36 @@ contract DsrManager {
         z = add(mul(x, RAY), sub(y, 1)) / y;
     }
 
-    constructor(address pot_, address daiJoin_) public {
+    constructor(address pot_, address haiJoin_) public {
         pot = PotLike(pot_);
-        daiJoin = JoinLike(daiJoin_);
-        dai = GemLike(daiJoin.dai());
+        haiJoin = JoinLike(haiJoin_);
+        hai = GemLike(haiJoin.hai());
 
         VatLike vat = VatLike(pot.vat());
-        vat.hope(address(daiJoin));
+        vat.hope(address(haiJoin));
         vat.hope(address(pot));
-        dai.approve(address(daiJoin), uint256(-1));
+        hai.approve(address(haiJoin), uint256(-1));
     }
 
-    function daiBalance(address usr) external returns (uint256 wad) {
+    function haiBalance(address usr) external returns (uint256 wad) {
         uint256 chi = (now > pot.rho()) ? pot.drip() : pot.chi();
         wad = rmul(chi, pieOf[usr]);
     }
 
-    // wad is denominated in dai
+    // wad is denominated in hai
     function join(address dst, uint256 wad) external {
         uint256 chi = (now > pot.rho()) ? pot.drip() : pot.chi();
         uint256 pie = rdiv(wad, chi);
         pieOf[dst] = add(pieOf[dst], pie);
         supply = add(supply, pie);
 
-        dai.transferFrom(msg.sender, address(this), wad);
-        daiJoin.join(address(this), wad);
+        hai.transferFrom(msg.sender, address(this), wad);
+        haiJoin.join(address(this), wad);
         pot.join(pie);
         emit Join(dst, wad);
     }
 
-    // wad is denominated in dai
+    // wad is denominated in hai
     function exit(address dst, uint256 wad) external {
         uint256 chi = (now > pot.rho()) ? pot.drip() : pot.chi();
         uint256 pie = rdivup(wad, chi);
@@ -116,7 +116,7 @@ contract DsrManager {
 
         pot.exit(pie);
         uint256 amt = rmul(chi, pie);
-        daiJoin.exit(dst, amt);
+        haiJoin.exit(dst, amt);
         emit Exit(dst, amt);
     }
 
@@ -129,7 +129,7 @@ contract DsrManager {
 
         pot.exit(pie);
         uint256 amt = rmul(chi, pie);
-        daiJoin.exit(dst, amt);
+        haiJoin.exit(dst, amt);
         emit Exit(dst, amt);
     }
 }
